@@ -1,0 +1,28 @@
+# 환경변수 (API 키 포함 - 절대 업로드 금지)
+.env
+.env.local
+.env.*.local
+
+# DB (개인 투자 기록 포함)
+*.db
+dividend_calendar.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# 로그
+*.log
+scheduler.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

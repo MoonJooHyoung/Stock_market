@@ -1,0 +1,13 @@
+# DART API 설정
+DART_API_KEY=your_api_key_here
+
+# 공공데이터포털 API 설정
+HOLIDAY_API_KEY=your_holiday_api_key_here
+
+# 환경 설정 (development, production, test)
+ENVIRONMENT=development
+
+# API 요청 설정
+REQUEST_DELAY=0.1
+MAX_RETRIES=3
+TIMEOUT=30

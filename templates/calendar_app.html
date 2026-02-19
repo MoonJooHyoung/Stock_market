@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>달력</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 2400px;
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        .left-space {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 100vh;
+            min-width: 300px;
+        }
+        
+        .investment-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .section-header:hover {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .section-content {
+            display: none;
+        }
+        
+        .section-content.expanded {
+            display: block;
+        }
+        
+        .section-toggle {
+            transition: transform 0.3s ease;
+        }
+        
+        .section-header.expanded .section-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .stock-list {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stock-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stock-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stock-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .btn-confirm {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .btn-confirm:hover {
+            background: #0056b3;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .buy-text {
+            color: #dc3545;
+        }
+        
+        .sell-text {
+            color: #007bff;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .input-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .btn {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+            width: auto;
+        }
+        
+        .summary-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .summary-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .summary-card.expanded {
+            background: #f8f9fa;
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .summary-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .summary-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .summary-details {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .summary-card.expanded .summary-details {
+            display: block;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .detail-amount {
+            font-weight: 500;
+        }
+        
+        .total-section {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .total-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .total-item:last-child {
+            border-top: 2px solid #333;
+            padding-top: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .summary-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .calendar-section {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 5px 30px 30px 30px;
+            height: 900px;
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            min-width: 400px;
+        }
+
+        .modal-section {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transform: translateX(100%);
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+            min-width: 350px;
+        }
+
+        .modal-section.show {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .close-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #ff3742;
+        }
+
+        .calendar-title-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 5px;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 3px;
+            position: relative;
+            width: 80px;
+            flex-shrink: 0;
+        }
+        
+        .date-text {
+            font-size: 2.5rem;
+            color: #333;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            position: absolute;
+            top: -8px;
+            right: 0;
+        }
+        
+        .small-nav-button {
+            background: none;
+            border: none;
+            width: 16px;
+            height: 16px;
+            font-size: 0.6rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .small-nav-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .small-nav-button:active {
+            transform: scale(0.9);
+        }
+        
+
+        .calendar-header {
+            display: flex;
+            width: 100%;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+        
+        #calendarGrid {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .calendar-header-cell {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+            background-color: transparent;
+            border: none;
+        }
+
+        .calendar-header-cell:first-child {
+            color: red;
+        }
+
+        .calendar-header-cell:last-child {
+            color: blue;
+        }
+
+        .calendar-week {
+            display: flex;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .calendar-cell {
+            flex: 1;
+            padding: 8px 12px;
+            min-height: 120px;
+            border: 1px solid #dee2e6;
+            background-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .calendar-cell:hover {
+            background-color: #f8f9fa;
+        }
+
+        .calendar-cell.empty {
+            background-color: transparent;
+            color: transparent;
+            cursor: default;
+            border: none;
+        }
+
+        .calendar-cell.sunday {
+            color: red;
+            font-weight: bold;
+        }
+
+        .calendar-cell.saturday {
+            color: blue;
+            font-weight: bold;
+        }
+
+        .calendar-cell.weekday {
+            color: black;
+            font-weight: bold;
+        }
+
+        .day-number {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+        .event-info {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.2;
+        }
+
+        .event-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .event-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .event-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .event-details div {
+            margin-bottom: 4px;
+        }
+
+        .kospi-section, .kosdaq-section {
+            margin-bottom: 20px;
+        }
+
+        .kospi-section h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .kosdaq-section h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .no-events {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-space">
+            <!-- 투자 원금 관리 -->
+            <div class="investment-section">
+                <div class="section-header" onclick="toggleSection('investment')">
+                    <span class="section-title">투자 원금 관리</span>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="investmentContent">
+                    <div class="input-group">
+                        <input type="number" id="investmentAmount" placeholder="투자할 금액을 입력하세요" onkeypress="handleInvestmentKeyPress(event)">
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-header">
+                            <span class="summary-title">총 투자금</span>
+                            <span class="summary-amount" id="totalInvestment">0원</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 보유 종목 관리 -->
+            <div class="investment-section">
+                <div class="section-header" onclick="toggleSection('stocks')">
+                    <span class="section-title">보유 종목 관리</span>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="stocksContent">
+                    <div class="input-group">
+                        <div class="input-row">
+                            <button class="btn" onclick="openModal('buy')"><span class="buy-text">매수</span></button>
+                            <button class="btn" onclick="openModal('sell')"><span class="sell-text">매도</span></button>
+                        </div>
+                    </div>
+                    
+                    <!-- 보유 종목 리스트 -->
+                    <div class="stock-list" id="stockList">
+                        <div style="text-align: center; color: #999; padding: 20px;">
+                            보유 종목이 없습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배당금 관리 -->
+            <div class="investment-section">
+                <div class="section-header" onclick="toggleSection('dividend')">
+                    <span class="section-title">배당금 관리</span>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="dividendContent">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <input type="text" id="dividendStockName" placeholder="종목명">
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="dividendDate">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <input type="number" id="dividendAmount" placeholder="배당금액">
+                        </div>
+                        <div class="input-group">
+                            <button class="btn" onclick="openDividendListModal()" style="margin: 0;">배당 기록</button>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="addDividend()">배당금 추가</button>
+                    <div class="summary-card">
+                        <div class="summary-header">
+                            <span class="summary-title">총 배당금</span>
+                            <span class="summary-amount" id="totalDividend">0원</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 총액 표시 -->
+            <div class="total-section">
+                <div class="total-item">
+                    <span>총 투자금</span>
+                    <span id="displayTotalInvestment">0원</span>
+                </div>
+                <div class="total-item">
+                    <span>총 배당금</span>
+                    <span id="displayTotalDividend">0원</span>
+                </div>
+                <div class="total-item">
+                    <span>매도 차익</span>
+                    <span id="displayTotalGain">0원</span>
+                </div>
+                <div class="total-item">
+                    <span>총 금액</span>
+                    <span id="displayTotalAmount">0원</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 매수/매도 모달 -->
+        <div id="transactionModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title" id="modalTitle">매수</span>
+                </div>
+                <div class="input-group">
+                    <label>종목명</label>
+                    <input type="text" id="modalStockName" placeholder="종목명을 입력하세요">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label id="priceLabel">매수가</label>
+                        <input type="number" id="modalPrice" placeholder="가격">
+                    </div>
+                    <div class="input-group">
+                        <label>개수</label>
+                        <input type="number" id="modalQuantity" placeholder="개수">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>날짜</label>
+                    <input type="date" id="modalDate">
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeTransactionModal()">취소</button>
+                    <button class="btn-confirm" onclick="confirmTransaction()">확인</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 배당금 리스트 모달 -->
+        <div id="dividendListModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">배당금 내역</span>
+                    <button class="close-modal" onclick="closeDividendListModal()">&times;</button>
+                </div>
+                <div id="dividendListContent" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 배당 내역이 여기에 표시됩니다 -->
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeDividendListModal()">닫기</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="calendar-section">
+                <div class="calendar-title-container">
+                    <div class="date-group">
+                        <div class="nav-buttons">
+                            <button class="small-nav-button" onclick="changeYear(-1)">◀</button>
+                            <button class="small-nav-button" onclick="changeYear(1)">▶</button>
+                        </div>
+                        <div class="date-text">
+                            <span id="yearDisplay">2025</span>년
+                        </div>
+                    </div>
+                    <div class="date-group">
+                        <div class="nav-buttons">
+                            <button class="small-nav-button" onclick="changeMonth(-1)">◀</button>
+                            <button class="small-nav-button" onclick="changeMonth(1)">▶</button>
+                        </div>
+                        <div class="date-text">
+                            <span id="monthDisplay">9</span>월
+                        </div>
+                    </div>
+                </div>
+            
+            <div class="calendar-header">
+                <div class="calendar-header-cell">일</div>
+                <div class="calendar-header-cell">월</div>
+                <div class="calendar-header-cell">화</div>
+                <div class="calendar-header-cell">수</div>
+                <div class="calendar-header-cell">목</div>
+                <div class="calendar-header-cell">금</div>
+                <div class="calendar-header-cell">토</div>
+            </div>
+            
+            <div id="calendarGrid"></div>
+        </div>
+
+        <div class="modal-section" id="modalSection">
+            <div class="modal-header">
+                <h2 id="modalTitle">이벤트 정보</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="eventList" class="event-list">
+                <div class="no-events">날짜를 선택하면 해당 날짜의 배당 이벤트 정보가 표시됩니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 현재 날짜
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonth = currentDate.getMonth();
+
+        // 실제 배당 데이터 (API에서 가져올 데이터)
+        let dividendEvents = {};
+
+        // 달력 생성
+        async function generateCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            
+            // 제목 업데이트
+            document.getElementById('yearDisplay').textContent = currentYear;
+            document.getElementById('monthDisplay').textContent = currentMonth + 1;
+            
+            // 공휴일 데이터 로드
+            if (!koreanHolidays[currentYear]) {
+                showUpdateNotification(`${currentYear}년 공휴일 데이터를 로드 중입니다...`);
+                koreanHolidays[currentYear] = await loadHolidayData(currentYear);
+                showUpdateNotification(`${currentYear}년 공휴일 데이터가 업데이트되었습니다.`);
+            }
+            
+            // 배당 데이터 로드
+            await loadDividendData(currentYear, currentMonth + 1);
+            
+            // 달력 그리드 초기화
+            calendarGrid.innerHTML = '';
+            
+            // 해당 월의 첫 번째 날과 마지막 날
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const firstDayOfWeek = firstDay.getDay(); // 0: 일요일, 6: 토요일
+            const totalDays = lastDay.getDate();
+            
+            // 달력 주 생성
+            let currentWeek = document.createElement('div');
+            currentWeek.className = 'calendar-week';
+            
+            // 첫 번째 주의 빈 셀들
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell empty';
+                currentWeek.appendChild(emptyCell);
+            }
+            
+            // 날짜 셀들
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
+                
+                // 공휴일 확인
+                const isHolidayDay = isHoliday(currentYear, currentMonth + 1, day);
+                
+                // 요일별 클래스 설정
+                if (dayOfWeek === 0) {
+                    cell.className = 'calendar-cell sunday';
+                } else if (dayOfWeek === 6) {
+                    cell.className = 'calendar-cell saturday';
+                } else {
+                    cell.className = 'calendar-cell weekday';
+                }
+                
+                // 날짜 표시
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                
+                // 공휴일이면 빨간색으로 표시
+                if (isHolidayDay) {
+                    dayNumber.style.color = '#dc3545';
+                }
+                
+                cell.appendChild(dayNumber);
+                
+                // 이벤트 정보 표시
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const events = dividendEvents[dateStr] || {};
+                
+                if (events && (events.kospi || events.kosdaq)) {
+                    const kospiEvents = events.kospi || [];
+                    const kosdaqEvents = events.kosdaq || [];
+                    
+                    const eventInfo = document.createElement('div');
+                    eventInfo.className = 'event-info';
+                    
+                    let eventText = [];
+                    if (kospiEvents.length > 0) {
+                        eventText.push(`코스피 ${kospiEvents.length}건`);
+                    }
+                    if (kosdaqEvents.length > 0) {
+                        eventText.push(`코스닥 ${kosdaqEvents.length}건`);
+                    }
+                    eventInfo.innerHTML = eventText.join(' ');
+                    
+                    cell.appendChild(eventInfo);
+                }
+                
+                // 클릭 이벤트
+                cell.onclick = () => selectDate(dateStr, events);
+                
+                currentWeek.appendChild(cell);
+                
+                // 주가 끝나면 새 주 시작
+                if (dayOfWeek === 6) {
+                    calendarGrid.appendChild(currentWeek);
+                    currentWeek = document.createElement('div');
+                    currentWeek.className = 'calendar-week';
+                }
+            }
+            
+            // 마지막 주의 빈 셀들 (6주 완성)
+            const remainingCells = 7 - (currentWeek.children.length);
+            for (let i = 0; i < remainingCells; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell empty';
+                currentWeek.appendChild(emptyCell);
+            }
+            
+            // 마지막 주 추가
+            calendarGrid.appendChild(currentWeek);
+            
+            // 빈 주 제거 (마지막 주가 완전히 비어있으면 제거)
+            const weeks = calendarGrid.children;
+            for (let i = weeks.length - 1; i >= 0; i--) {
+                const week = weeks[i];
+                let hasContent = false;
+                
+                for (let cell of week.children) {
+                    if (!cell.classList.contains('empty')) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+                
+                // 완전히 비어있는 주는 제거 (첫 번째 주는 제외)
+                if (!hasContent && i > 0) {
+                    calendarGrid.removeChild(week);
+                }
+            }
+            
+            // 6주 미만인 경우 빈 주 추가 (상단 고정을 위해)
+            const currentWeeks = calendarGrid.children.length;
+            const maxWeeks = 6;
+            
+            if (currentWeeks < maxWeeks) {
+                for (let week = currentWeeks; week < maxWeeks; week++) {
+                    const emptyWeek = document.createElement('div');
+                    emptyWeek.className = 'calendar-week';
+                    emptyWeek.style.display = 'none'; // 완전히 숨김 처리
+                    
+                    for (let day = 0; day < 7; day++) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'calendar-cell empty';
+                        emptyWeek.appendChild(emptyCell);
+                    }
+                    
+                    calendarGrid.appendChild(emptyWeek);
+                }
+            }
+        }
+
+        // 현재 선택된 날짜를 저장하는 변수
+        let selectedDate = null;
+
+        // 한국 공휴일 데이터
+        let koreanHolidays = {};
+        
+        // API 설정
+        const HOLIDAY_API_KEY = '3cbcae44fd294667c5ad145dbec6c54a2e915fc340c42472883d1576414ebcd2';
+        
+        // 공휴일 데이터 캐시
+        const HOLIDAY_CACHE_KEY = 'koreanHolidaysCache';
+        const CACHE_EXPIRY_DAYS = 30;
+
+        // 투자 관리 데이터
+        let investmentData = {
+            investments: [],
+            stocks: {},
+            dividends: [],
+            totalGain: 0
+        };
+
+        // 공휴일 데이터 로드
+        async function loadHolidayData(year) {
+            // 캐시에서 확인
+            const cached = getCachedHolidayData(year);
+            if (cached) {
+                console.log(`${year}년 공휴일 데이터를 캐시에서 로드했습니다.`);
+                return cached;
+            }
+            
+            try {
+                // API에서 데이터 가져오기
+                const holidays = await fetchHolidayDataFromAPI(year);
+                if (Object.keys(holidays).length > 0) {
+                    // 캐시에 저장
+                    setCachedHolidayData(year, holidays);
+                    return holidays;
+                }
+            } catch (error) {
+                console.error('API에서 공휴일 데이터 로드 실패:', error);
+            }
+            
+            // 실패 시 기본 데이터 사용
+            return getDefaultHolidayData(year);
+        }
+        
+        // API에서 공휴일 데이터 가져오기
+        async function fetchHolidayDataFromAPI(year) {
+            try {
+                const response = await fetch(`/api/holidays/${year}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.holidays;
+                } else {
+                    throw new Error(data.error || 'API 호출 실패');
+                }
+            } catch (error) {
+                console.error('공휴일 API 호출 실패:', error);
+                return getDefaultHolidayData(year);
+            }
+        }
+        
+        // 캐시에서 공휴일 데이터 가져오기
+        function getCachedHolidayData(year) {
+            try {
+                const cached = localStorage.getItem(`${HOLIDAY_CACHE_KEY}_${year}`);
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    const now = new Date();
+                    const cacheDate = new Date(data.timestamp);
+                    const daysDiff = (now - cacheDate) / (1000 * 60 * 60 * 24);
+                    
+                    if (daysDiff < CACHE_EXPIRY_DAYS) {
+                        return data.holidays;
+                    }
+                }
+            } catch (error) {
+                console.error('캐시 데이터 읽기 실패:', error);
+            }
+            return null;
+        }
+        
+        // 공휴일 데이터를 캐시에 저장
+        function setCachedHolidayData(year, holidays) {
+            try {
+                const data = {
+                    holidays: holidays,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem(`${HOLIDAY_CACHE_KEY}_${year}`, JSON.stringify(data));
+            } catch (error) {
+                console.error('캐시 데이터 저장 실패:', error);
+            }
+        }
+        
+        // 기본 공휴일 데이터 (API 실패 시 사용)
+        function getDefaultHolidayData(year) {
+            const defaultHolidays = {
+                2025: {
+                    1: [1], // 신정
+                    2: [10, 11, 12], // 설날 연휴
+                    3: [1], // 삼일절
+                    4: [8], // 국회의원선거일
+                    5: [5, 6], // 어린이날, 대체휴일
+                    6: [6], // 현충일
+                    8: [15], // 광복절
+                    10: [3, 6, 7, 8, 9], // 개천절, 추석 연휴, 한글날, 대체휴일들
+                    12: [25] // 성탄절
+                },
+                2026: {
+                    1: [1], // 신정
+                    2: [16, 17, 18], // 설날 연휴
+                    3: [1, 2], // 삼일절, 대체휴일
+                    5: [5], // 어린이날
+                    6: [6], // 현충일
+                    8: [15], // 광복절
+                    9: [25, 26, 27], // 추석 연휴
+                    10: [3, 9], // 개천절, 한글날
+                    12: [25] // 성탄절
+                }
+            };
+            return defaultHolidays[year] || {};
+        }
+        
+        // 공휴일 확인 함수
+        function isHoliday(year, month, day) {
+            if (koreanHolidays[year] && koreanHolidays[year][month]) {
+                return koreanHolidays[year][month].includes(day);
+            }
+            return false;
+        }
+        
+        // 배당 데이터 로드
+        async function loadDividendData(year, month) {
+            try {
+                const response = await fetch(`/api/calendar/${year}/${month}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 배당 데이터를 날짜별로 변환
+                    dividendEvents = {};
+                    Object.keys(data.dividends).forEach(day => {
+                        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        dividendEvents[dateStr] = data.dividends[day];
+                    });
+                    console.log(`${year}년 ${month}월 배당 데이터 로드 완료:`, dividendEvents);
+                }
+            } catch (error) {
+                console.error('배당 데이터 로드 실패:', error);
+                // 실패 시 빈 데이터 사용
+                dividendEvents = {};
+            }
+        }
+
+        // 업데이트 알림 표시
+        function showUpdateNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #007bff;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-size: 14px;
+                max-width: 300px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // 투자 원금 추가
+        function addInvestment() {
+            const amount = parseFloat(document.getElementById('investmentAmount').value);
+            if (!amount || amount <= 0) {
+                alert('올바른 금액을 입력해주세요.');
+                return;
+            }
+
+            const investment = {
+                amount: amount,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            investmentData.investments.push(investment);
+            document.getElementById('investmentAmount').value = '';
+            updateInvestmentDisplay();
+            updateTotals();
+        }
+
+        // 투자 금액 입력 필드 엔터키 이벤트
+        function handleInvestmentKeyPress(event) {
+            if (event.key === 'Enter') {
+                addInvestment();
+            }
+        }
+
+
+        // 배당금 추가
+        function addDividend() {
+            const stockName = document.getElementById('dividendStockName').value.trim();
+            const amount = parseFloat(document.getElementById('dividendAmount').value);
+            const date = document.getElementById('dividendDate').value;
+
+            if (!stockName || !amount || !date) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            const dividend = {
+                stockName: stockName,
+                amount: amount,
+                date: date
+            };
+
+            investmentData.dividends.push(dividend);
+
+            // 입력 필드 초기화
+            document.getElementById('dividendStockName').value = '';
+            document.getElementById('dividendAmount').value = '';
+            document.getElementById('dividendDate').value = '';
+
+            updateDividendDisplay();
+            updateTotals();
+        }
+
+        // 투자 원금 표시 업데이트
+        function updateInvestmentDisplay() {
+            const total = investmentData.investments.reduce((sum, inv) => sum + inv.amount, 0);
+            document.getElementById('totalInvestment').textContent = total.toLocaleString() + '원';
+            document.getElementById('displayTotalInvestment').textContent = total.toLocaleString() + '원';
+        }
+
+        // 보유 종목 표시 업데이트
+        function updateStockDisplay() {
+            const stockList = document.getElementById('stockList');
+            const stocks = Object.entries(investmentData.stocks);
+            
+            if (stocks.length === 0) {
+                stockList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">보유 종목이 없습니다.</div>';
+            } else {
+                stockList.innerHTML = stocks.map(([name, data]) => `
+                    <div class="stock-item">
+                        <span class="stock-name">${name}</span>
+                        <span class="stock-info">평단가 ${data.avgPrice.toLocaleString()}원 · ${data.quantity}주</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 배당금 표시 업데이트
+        function updateDividendDisplay() {
+            const total = investmentData.dividends.reduce((sum, div) => sum + div.amount, 0);
+            document.getElementById('totalDividend').textContent = total.toLocaleString() + '원';
+            document.getElementById('displayTotalDividend').textContent = total.toLocaleString() + '원';
+        }
+
+        // 배당금 리스트 모달 열기
+        function openDividendListModal() {
+            const modal = document.getElementById('dividendListModal');
+            const content = document.getElementById('dividendListContent');
+            
+            if (investmentData.dividends.length === 0) {
+                content.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">배당금 내역이 없습니다.</div>';
+            } else {
+                content.innerHTML = investmentData.dividends.map(div => `
+                    <div class="detail-item">
+                        <div>
+                            <div style="font-weight: bold; color: #333;">${div.stockName}</div>
+                            <div style="font-size: 0.9rem; color: #666;">${div.date}</div>
+                        </div>
+                        <div style="font-weight: bold; color: #007bff; font-size: 1.1rem;">
+                            ${div.amount.toLocaleString()}원
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        // 배당금 리스트 모달 닫기
+        function closeDividendListModal() {
+            document.getElementById('dividendListModal').style.display = 'none';
+        }
+
+        // 총액 업데이트
+        function updateTotals() {
+            const totalInvestment = investmentData.investments.reduce((sum, inv) => sum + inv.amount, 0);
+            const totalDividend = investmentData.dividends.reduce((sum, div) => sum + div.amount, 0);
+            const totalAmount = totalInvestment + totalDividend + investmentData.totalGain;
+
+            document.getElementById('displayTotalGain').textContent = investmentData.totalGain.toLocaleString() + '원';
+            document.getElementById('displayTotalAmount').textContent = totalAmount.toLocaleString() + '원';
+        }
+
+        // 상세 내역 토글
+        function toggleDetails(type) {
+            const card = document.querySelector(`#${type}Details`).parentElement;
+            card.classList.toggle('expanded');
+        }
+
+        // 섹션 토글
+        function toggleSection(sectionName) {
+            const header = document.querySelector(`#${sectionName}Content`).previousElementSibling;
+            const content = document.getElementById(`${sectionName}Content`);
+            
+            header.classList.toggle('expanded');
+            content.classList.toggle('expanded');
+        }
+
+        // 모달 열기
+        function openModal(type) {
+            const modal = document.getElementById('transactionModal');
+            const title = document.getElementById('modalTitle');
+            const priceLabel = document.getElementById('priceLabel');
+            
+            if (type === 'buy') {
+                title.textContent = '매수';
+                priceLabel.textContent = '매수가';
+            } else {
+                title.textContent = '매도';
+                priceLabel.textContent = '매도가';
+            }
+            
+            // 입력 필드 초기화
+            document.getElementById('modalStockName').value = '';
+            document.getElementById('modalPrice').value = '';
+            document.getElementById('modalQuantity').value = '';
+            document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
+            
+            modal.style.display = 'block';
+            window.currentTransactionType = type;
+        }
+
+        // 거래 모달 닫기
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').style.display = 'none';
+        }
+
+        // 거래 확인
+        function confirmTransaction() {
+            const stockName = document.getElementById('modalStockName').value.trim();
+            const price = parseFloat(document.getElementById('modalPrice').value);
+            const quantity = parseInt(document.getElementById('modalQuantity').value);
+            const date = document.getElementById('modalDate').value;
+
+            if (!stockName || !price || !quantity || !date) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            if (window.currentTransactionType === 'buy') {
+                addBuyTransactionFromModal(stockName, price, quantity, date);
+            } else {
+                addSellTransactionFromModal(stockName, price, quantity, date);
+            }
+
+            closeTransactionModal();
+        }
+
+        // 모달에서 매수 거래 추가
+        function addBuyTransactionFromModal(stockName, price, quantity, date) {
+            const transaction = {
+                type: 'buy',
+                price: price,
+                quantity: quantity,
+                date: date
+            };
+
+            if (!investmentData.stocks[stockName]) {
+                investmentData.stocks[stockName] = {
+                    quantity: 0,
+                    avgPrice: 0,
+                    transactions: []
+                };
+            }
+
+            // 평단가 계산
+            const currentTotal = investmentData.stocks[stockName].quantity * investmentData.stocks[stockName].avgPrice;
+            const newTotal = currentTotal + (price * quantity);
+            const newQuantity = investmentData.stocks[stockName].quantity + quantity;
+            
+            investmentData.stocks[stockName].quantity = newQuantity;
+            investmentData.stocks[stockName].avgPrice = newTotal / newQuantity;
+            investmentData.stocks[stockName].transactions.push(transaction);
+
+            updateStockDisplay();
+            updateTotals();
+        }
+
+        // 모달에서 매도 거래 추가
+        function addSellTransactionFromModal(stockName, price, quantity, date) {
+            if (!investmentData.stocks[stockName] || investmentData.stocks[stockName].quantity < quantity) {
+                alert('보유 수량이 부족합니다.');
+                return;
+            }
+
+            const transaction = {
+                type: 'sell',
+                price: price,
+                quantity: quantity,
+                date: date
+            };
+
+            // 매도 차익 계산
+            const avgPrice = investmentData.stocks[stockName].avgPrice;
+            const gain = (price - avgPrice) * quantity;
+            investmentData.totalGain += gain;
+
+            // 보유 수량 차감
+            investmentData.stocks[stockName].quantity -= quantity;
+            investmentData.stocks[stockName].transactions.push(transaction);
+
+            // 보유 수량이 0이 되면 종목 제거
+            if (investmentData.stocks[stockName].quantity === 0) {
+                delete investmentData.stocks[stockName];
+            }
+
+            updateStockDisplay();
+            updateTotals();
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 오늘 날짜를 기본값으로 설정
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dividendDate').value = today;
+
+            // 초기 표시 업데이트
+            updateInvestmentDisplay();
+            updateStockDisplay();
+            updateDividendDisplay();
+            updateTotals();
+        });
+        
+        // 날짜 선택
+        function selectDate(dateStr, events) {
+            const modalSection = document.getElementById('modalSection');
+            const modalTitle = document.getElementById('modalTitle');
+            const eventList = document.getElementById('eventList');
+            
+            // 같은 날짜를 두 번 클릭한 경우 모달 닫기
+            if (selectedDate === dateStr && modalSection.classList.contains('show')) {
+                closeModal();
+                return;
+            }
+            
+            // 선택된 날짜 업데이트
+            selectedDate = dateStr;
+            
+            // 모달 제목 설정 (날짜 형식 개선)
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            modalTitle.textContent = `${year}년 ${month}월 ${day}일 배당 이벤트`;
+            
+            // 이벤트 목록 생성
+            if (!events || (!events.kospi && !events.kosdaq)) {
+                eventList.innerHTML = '<div class="no-events">선택된 날짜에 배당 이벤트가 없습니다.</div>';
+            } else {
+                let html = '';
+                
+                // 날짜 형식 개선 함수
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return 'N/A';
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(4, 6);
+                    const day = dateStr.substring(6, 8);
+                    return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+                };
+                
+                // 코스피 이벤트
+                const kospiEvents = events.kospi || [];
+                if (kospiEvents.length > 0) {
+                    html += '<div class="kospi-section"><h3>코스피</h3>';
+                    kospiEvents.forEach(event => {
+                        html += `
+                            <div class="event-item">
+                                <h4>${event.name}</h4>
+                                <div class="event-details">
+                                    <div>배당락일: ${formatDate(event.ex_date)}</div>
+                                    <div>배당지급일: ${formatDate(event.pay_date)}</div>
+                                    <div>주당배당금: ${event.per_share ? event.per_share.toLocaleString() : 'N/A'}원</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                // 코스닥 이벤트
+                const kosdaqEvents = events.kosdaq || [];
+                if (kosdaqEvents.length > 0) {
+                    html += '<div class="kosdaq-section"><h3>코스닥</h3>';
+                    kosdaqEvents.forEach(event => {
+                        html += `
+                            <div class="event-item">
+                                <h4>${event.name}</h4>
+                                <div class="event-details">
+                                    <div>배당락일: ${formatDate(event.ex_date)}</div>
+                                    <div>배당지급일: ${formatDate(event.pay_date)}</div>
+                                    <div>주당배당금: ${event.per_share ? event.per_share.toLocaleString() : 'N/A'}원</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                eventList.innerHTML = html;
+            }
+            
+            // 모달 표시 (visibility 먼저 설정)
+            modalSection.style.visibility = 'visible';
+            modalSection.classList.add('show');
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            const modalSection = document.getElementById('modalSection');
+            modalSection.classList.remove('show');
+            
+            // 선택된 날짜 초기화
+            selectedDate = null;
+            
+            // 애니메이션 완료 후 완전히 숨김
+            setTimeout(() => {
+                if (!modalSection.classList.contains('show')) {
+                    modalSection.style.visibility = 'hidden';
+                }
+            }, 800); // 0.8초 후
+        }
+
+        // 년도 변경 (방향: -1 또는 1)
+        function changeYear(direction) {
+            currentYear += direction;
+            document.getElementById('yearDisplay').textContent = currentYear;
+            generateCalendar();
+        }
+        
+        // 월 변경 (방향: -1 또는 1)
+        function changeMonth(direction) {
+            currentMonth += direction;
+            
+            // 월 범위 조정 (0-11)
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+                document.getElementById('yearDisplay').textContent = currentYear;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+                document.getElementById('yearDisplay').textContent = currentYear;
+            }
+            
+            document.getElementById('monthDisplay').textContent = currentMonth + 1;
+            generateCalendar();
+        }
+        
+        
+        // 페이지 로드 시 달력 생성
+        window.onload = function() {
+            generateCalendar();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[server]
+# 브라우저 자동 열기 비활성화
+headless = false
+
+[browser]
+# 크롬 브라우저 경로 설정 (Windows)
+serverAddress = "localhost"
+serverPort = 8501

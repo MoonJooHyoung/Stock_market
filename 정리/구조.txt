@@ -1,0 +1,44 @@
+ 완전한 주식 배당 달력 앱 개발 순서
+1단계: 프로젝트 구조 설정
+Stock_market/
+├── templates/
+│   └── calendar_app.html
+├── static/
+│   ├── css/
+│   └── js/
+├── data/
+│   └── dividend_data.db
+├── .env
+├── requirements.txt
+├── config.py
+├── web_server.py
+├── dividend_collector.py
+└── run_app.py
+
+2단계: 환경 설정
+
+# 1. 가상환경 생성
+python -m venv venv
+venv\Scripts\activate
+
+# 2. 패키지 설치
+pip install flask flask-cors requests python-dotenv
+
+# 3. API 키 설정 (.env 파일)
+DART_API_KEY=your_dart_api_key
+HOLIDAY_API_KEY=your_holiday_api_key
+
+3단계: 백엔드 API 서버 구축
+Flask 서버 (web_server.py)
+배당 데이터 수집기 (dividend_collector.py)
+설정 파일 (config.py)
+
+4단계: 프론트엔드 UI 개발
+달력 컴포넌트 (HTML/CSS/JavaScript)
+투자 관리 사이드바
+모달 창들 (매수/매도/배당 입력)
+
+5단계: 데이터 통합
+실시간 배당 데이터 (DART API)
+공휴일 데이터 (공공데이터포털 API)
+로컬 캐싱 시스템
